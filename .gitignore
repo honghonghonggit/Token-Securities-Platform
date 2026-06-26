@@ -1,0 +1,22 @@
+# 시크릿 — 절대 커밋 금지 (개인키/니모닉/RPC)
+.env
+.env.local
+
+# 의존성
+node_modules/
+
+# Hardhat 산출물
+artifacts/
+cache/
+coverage/
+coverage.json
+typechain-types/
+
+# 로그
+*.log
+npm-debug.log*
+
+# OS / 에디터
+.DS_Store
+.idea/
+.vscode/
