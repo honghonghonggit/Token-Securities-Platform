@@ -5,6 +5,11 @@
 # 의존성
 node_modules/
 
+# 프론트엔드 빌드/로컬 설정
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
 # Hardhat 산출물
 artifacts/
 cache/

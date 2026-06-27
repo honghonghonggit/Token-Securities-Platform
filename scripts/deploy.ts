@@ -1,12 +1,39 @@
-import { ethers, network } from "hardhat";
+import { ethers, network, artifacts } from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * 배포 순서: InvestorRegistry → SecurityToken(레지스트리 주소 주입).
- * 데모 편의를 위해 배포자(발행자)를 화이트리스트에 등록한다.
+ * 데모 편의를 위해 배포자(발행자)를 등록하고 컴플라이언스 규칙을 셋업한다.
+ * 배포 후 frontend/ 가 있으면 주소(.env.local)와 ABI를 자동으로 내보낸다.
  *
- * 사용: npx hardhat run scripts/deploy.ts --network sepolia
- * (.env 의 SEPOLIA_RPC_URL / PRIVATE_KEY 필요)
+ * 사용(로컬 데모): npx hardhat run scripts/deploy.ts --network localhost
+ * 사용(Sepolia):  npx hardhat run scripts/deploy.ts --network sepolia (.env 필요)
  */
+async function exportToFrontend(registryAddress: string, tokenAddress: string, chainId: number) {
+  const frontendDir = path.join(__dirname, "..", "frontend");
+  if (!fs.existsSync(frontendDir)) return;
+
+  // 1) 주소/체인 → frontend/.env.local
+  const envBody =
+    `VITE_CHAIN_ID=${chainId}\n` +
+    `VITE_REGISTRY_ADDRESS=${registryAddress}\n` +
+    `VITE_TOKEN_ADDRESS=${tokenAddress}\n`;
+  fs.writeFileSync(path.join(frontendDir, ".env.local"), envBody);
+
+  // 2) ABI → frontend/src/contracts/*.abi.json
+  const contractsDir = path.join(frontendDir, "src", "contracts");
+  fs.mkdirSync(contractsDir, { recursive: true });
+  for (const name of ["SecurityToken", "InvestorRegistry"]) {
+    const art = await artifacts.readArtifact(name);
+    fs.writeFileSync(
+      path.join(contractsDir, `${name}.abi.json`),
+      JSON.stringify(art.abi, null, 2) + "\n"
+    );
+  }
+  console.log("프론트엔드 연동: frontend/.env.local + ABI 내보내기 완료");
+}
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log(`네트워크: ${network.name}`);
@@ -39,7 +66,12 @@ async function main() {
   await (await registry["addInvestor(address,uint8)"](deployer.address, 3)).wait();
   console.log(`배포자를 INSTITUTIONAL 등급으로 등록: ${deployer.address}`);
 
+  // 4) 프론트엔드 연동(주소/ABI 내보내기) — frontend/ 가 있을 때만
+  const chainId = Number((await ethers.provider.getNetwork()).chainId);
+  await exportToFrontend(registryAddress, tokenAddress, chainId);
+
   console.log("\n=== 배포 요약 ===");
+  console.log(`네트워크: ${network.name} (chainId ${chainId})`);
   console.log(`InvestorRegistry: ${registryAddress}`);
   console.log(`SecurityToken:    ${tokenAddress}`);
   console.log(

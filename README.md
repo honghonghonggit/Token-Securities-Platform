@@ -14,7 +14,7 @@
 |------|------|------|
 | **Phase 1** | 토큰 발행 컨트랙트 + 화이트리스트 적격성 + Hardhat 테스트 + Sepolia 배포 | 구현됨 |
 | **Phase 2-A** | 투자한도(등급별 보유상한) + 전매제한(lock-up) + 테스트 | 구현됨 |
-| Phase 2-B | 프론트엔드(MetaMask) — 발행·투자·전송·위반 거부 데모 | 예정 |
+| **Phase 2-B** | 프론트엔드(React+MetaMask) — 발행·투자·전송·위반 거부 데모 | 구현됨 |
 | Phase 3 | 2차 시장 매칭(MINI-Exchange 개념 재사용), 배당 등 라이프사이클 | 예정 |
 
 ## 아키텍처 (Phase 1)
@@ -81,6 +81,34 @@ npx hardhat coverage
 npx hardhat run scripts/deploy.ts --network sepolia
 ```
 
+### 프론트엔드 데모 (로컬 — MetaMask)
+
+규제 위반 시 트랜잭션이 거부되는 장면을 직접 시연합니다. 터미널 3개를 사용합니다.
+
+```bash
+# 터미널 1 — 로컬 체인
+npx hardhat node
+
+# 터미널 2 — 배포(주소·ABI가 frontend/.env.local 로 자동 주입됨)
+npx hardhat run scripts/deploy.ts --network localhost
+
+# 터미널 3 — 프론트엔드
+cd frontend
+npm install
+npm run dev          # http://localhost:5173
+```
+
+MetaMask 설정: 네트워크 `localhost:8545`(chainId **31337**) 추가 → Hardhat이 출력한 테스트 계정을
+import(발행자 = 배포자 계정, 투자자 = 다른 계정). 데모 흐름:
+
+1. **발행자** 계정으로 투자자 등록(등급)·보유상한·lock-up 설정 후 발행(mint)
+2. **투자자** 계정으로 전송 시도 → 정상 전송은 성공, 다음 위반은 **거부 사유와 함께 차단**:
+   - 미등록 수신자 → `NotVerified` / `TransferNotCompliant`
+   - 보유상한 초과 → `ExceedsHoldingLimit`
+   - 전매제한 기간 → `LockupActive`
+
+> 전송 버튼은 실제 전송 전에 `staticCall`로 시뮬레이션해 위반 사유를 즉시 표시합니다.
+
 ### 환경 변수 (`.env`)
 
 `.env.example`를 복사해 `.env`로 만들고 값을 채웁니다. **`.env`는 절대 커밋하지 않습니다.**
@@ -96,8 +124,11 @@ ETHERSCAN_API_KEY=...
 ```
 contracts/
 ├── interfaces/IComplianceRegistry.sol   # 토큰↔레지스트리 계약(인터페이스)
-├── InvestorRegistry.sol                 # 화이트리스트(적격성)
-└── SecurityToken.sol                    # ERC20 + 검증 위임
-scripts/deploy.ts                        # Registry → Token 순서 배포
-test/                                    # Hardhat 테스트
+├── InvestorRegistry.sol                 # 적격성·등급·한도·lock-up 규칙(컴플라이언스 두뇌)
+└── SecurityToken.sol                    # ERC20 + _update 훅에서 규칙 집행
+scripts/deploy.ts                        # Registry → Token 배포 + 프론트 연동(.env.local/ABI)
+test/                                    # Hardhat 테스트 (32개)
+frontend/                                # React + TS + ethers v6 (MetaMask) dApp
+├── src/lib/                             # useWallet, contracts, errors(거부사유 디코딩), format
+└── src/components/                      # ConnectWallet, IssuerPanel, InvestorPanel, TxResult
 ```

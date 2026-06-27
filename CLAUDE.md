@@ -15,7 +15,8 @@
 ## 빌드 / 테스트
 - 의존성 설치: `npm install`
 - 컨트랙트: `npx hardhat compile`, `npx hardhat test` (현재 32개 테스트 통과), `npx hardhat run scripts/deploy.ts --network sepolia`
-- (Phase 2) 프론트: `npm run dev`, `npm run build`
+- 프론트: `cd frontend && npm install`, `npm run dev`(localhost:5173), `npm run build`(tsc+vite)
+- 로컬 데모: `npx hardhat node` → `npx hardhat run scripts/deploy.ts --network localhost`(주소/ABI를 frontend/.env.local 로 주입) → `cd frontend && npm run dev`
 
 ## 개발 순서
 1. 토큰 컨트랙트(ERC-20 기반 + 규제 확장) + Hardhat 테스트부터 TDD로
