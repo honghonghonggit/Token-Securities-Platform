@@ -13,9 +13,9 @@
 - 배포: 컨트랙트는 Sepolia 테스트넷, 프론트는 Vercel/Netlify 등 정적 호스팅
 
 ## 빌드 / 테스트
-- 컨트랙트: `npx hardhat compile`, `npx hardhat test`, `npx hardhat run scripts/deploy.js --network sepolia`
-- 프론트: `npm run dev`, `npm run build`
-- (스캐폴딩 후 실제 명령어로 검증해 이 섹션을 채울 것)
+- 의존성 설치: `npm install`
+- 컨트랙트: `npx hardhat compile`, `npx hardhat test` (현재 18개 테스트 통과), `npx hardhat run scripts/deploy.ts --network sepolia`
+- (Phase 2) 프론트: `npm run dev`, `npm run build`
 
 ## 개발 순서
 1. 토큰 컨트랙트(ERC-20 기반 + 규제 확장) + Hardhat 테스트부터 TDD로
