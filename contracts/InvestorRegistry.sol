@@ -72,9 +72,7 @@ contract InvestorRegistry is IComplianceRegistry, Ownable {
 
     /// @notice 투자자를 화이트리스트에서 제거한다(Grade.NONE).
     function removeInvestor(address account) external onlyOwner {
-        if (account == address(0)) revert ZeroAddress();
-        _grade[account] = Grade.NONE;
-        emit GradeSet(account, Grade.NONE);
+        _setGrade(account, Grade.NONE); // 0주소 검사 + GradeSet emit 재사용
         emit InvestorRemoved(account);
     }
 
