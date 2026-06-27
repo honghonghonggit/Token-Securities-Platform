@@ -26,10 +26,18 @@ async function main() {
   const tokenAddress = await token.getAddress();
   console.log(`SecurityToken 배포됨: ${tokenAddress}`);
 
-  // 3) 데모: 배포자를 적격 투자자로 등록
-  const tx = await registry.addInvestor(deployer.address);
-  await tx.wait();
-  console.log(`배포자를 화이트리스트에 등록: ${deployer.address}`);
+  // 3) 데모: 컴플라이언스 규칙 셋업 (등급별 보유상한 + 전매제한 기간)
+  //    Grade enum: NONE=0, RETAIL=1, PROFESSIONAL=2, INSTITUTIONAL=3
+  const DAY = 24 * 60 * 60;
+  await (await registry.setGradeLimit(1, 1000)).wait(); // RETAIL: 1,000
+  await (await registry.setGradeLimit(2, 10000)).wait(); // PROFESSIONAL: 10,000
+  // INSTITUTIONAL(3)은 상한 미설정 = 무제한
+  await (await registry.setLockupPeriod(30 * DAY)).wait(); // 전매제한 30일
+  console.log("규칙 설정: RETAIL≤1000, PROFESSIONAL≤10000, INSTITUTIONAL=무제한, lock-up=30일");
+
+  // 배포자를 INSTITUTIONAL(무제한·데모 발행이 한도에 걸리지 않도록)로 등록
+  await (await registry["addInvestor(address,uint8)"](deployer.address, 3)).wait();
+  console.log(`배포자를 INSTITUTIONAL 등급으로 등록: ${deployer.address}`);
 
   console.log("\n=== 배포 요약 ===");
   console.log(`InvestorRegistry: ${registryAddress}`);

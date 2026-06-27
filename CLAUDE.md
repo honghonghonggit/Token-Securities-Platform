@@ -14,7 +14,7 @@
 
 ## 빌드 / 테스트
 - 의존성 설치: `npm install`
-- 컨트랙트: `npx hardhat compile`, `npx hardhat test` (현재 18개 테스트 통과), `npx hardhat run scripts/deploy.ts --network sepolia`
+- 컨트랙트: `npx hardhat compile`, `npx hardhat test` (현재 32개 테스트 통과), `npx hardhat run scripts/deploy.ts --network sepolia`
 - (Phase 2) 프론트: `npm run dev`, `npm run build`
 
 ## 개발 순서

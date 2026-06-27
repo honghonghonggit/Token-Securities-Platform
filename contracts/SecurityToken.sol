@@ -35,6 +35,16 @@ contract SecurityToken is ERC20, ERC20Burnable, Ownable {
     error TransferNotCompliant(address from, address to);
     /// @dev 컴플라이언스 레지스트리 주소가 0.
     error ZeroComplianceAddress();
+    /// @dev 전매제한(lock-up) 기간이 끝나지 않아 전송 불가.
+    error LockupActive(address account, uint256 until);
+    /// @dev 수령 시 잔액이 등급별 보유상한을 초과.
+    error ExceedsHoldingLimit(address account, uint256 attempted, uint256 cap);
+
+    /// @notice 주소별 전매제한 해제 시각(Unix time). 이 시각 전에는 해당 주소의 전송이 막힌다.
+    mapping(address => uint256) public lockedUntil;
+
+    /// @notice 발행으로 전매제한이 설정될 때 발생.
+    event Locked(address indexed account, uint256 until);
 
     constructor(string memory name_, string memory symbol_, address registry_)
         ERC20(name_, symbol_)
@@ -51,21 +61,41 @@ contract SecurityToken is ERC20, ERC20Burnable, Ownable {
 
     /**
      * @dev ERC20 의 모든 잔액 변경(mint/burn/transfer)이 거치는 단일 훅.
-     *      super._update 호출 전에 컴플라이언스를 강제한다.
+     *      super._update 호출 전에 컴플라이언스(적격성·투자한도·전매제한)를 강제한다.
      */
     function _update(address from, address to, uint256 value) internal override {
         if (from == address(0)) {
-            // 발행(mint): 수신자가 적격이어야 함.
+            // 발행(mint): 수신자 적격성 + 투자한도 검증, 그리고 전매제한 설정.
             if (!compliance.isVerified(to)) revert NotVerified(to);
+            _enforceLimit(to, value);
+
+            uint256 newLock = block.timestamp + compliance.lockupPeriod();
+            if (newLock > lockedUntil[to]) {
+                lockedUntil[to] = newLock;
+                emit Locked(to, newLock);
+            }
         } else if (to == address(0)) {
             // 소각(burn): 컴플라이언스 예외 — 통과.
         } else {
-            // 일반 전송: from·to 모두 적격이어야 함.
+            // 일반 전송: 적격성(양쪽) + 전매제한(송신자) + 투자한도(수신자) 검증.
             if (!compliance.canTransfer(from, to, value)) {
                 revert TransferNotCompliant(from, to);
             }
+            if (block.timestamp < lockedUntil[from]) {
+                revert LockupActive(from, lockedUntil[from]);
+            }
+            _enforceLimit(to, value);
         }
 
         super._update(from, to, value);
+    }
+
+    /// @dev 수령 후 잔액이 수신자의 등급별 보유상한을 넘지 않는지 검증(상한 0 = 무제한).
+    function _enforceLimit(address to, uint256 value) private view {
+        uint256 cap = compliance.maxBalanceOf(to);
+        if (cap != 0) {
+            uint256 attempted = balanceOf(to) + value;
+            if (attempted > cap) revert ExceedsHoldingLimit(to, attempted, cap);
+        }
     }
 }

@@ -13,6 +13,15 @@ interface IComplianceRegistry {
     function isVerified(address account) external view returns (bool);
 
     /// @notice from→to 전송이 컴플라이언스 규칙을 통과하는지 여부.
-    /// @dev    Phase 1: from·to 모두 적격이어야 true. Phase 2: 한도·lock-up 규칙이 누적된다.
+    /// @dev    Phase 1: from·to 모두 적격이어야 true. 한도·lock-up 은 토큰이 자신의
+    ///         잔액·시각 상태로 별도 강제한다(이 view 는 적격성만 판단).
     function canTransfer(address from, address to, uint256 value) external view returns (bool);
+
+    /// @notice 해당 주소의 최대 보유 가능 수량(등급별 상한). 0 이면 무제한.
+    /// @dev    Phase 2(투자한도): 토큰이 수신 후 잔액과 비교해 강제한다.
+    function maxBalanceOf(address account) external view returns (uint256);
+
+    /// @notice 발행(mint) 시 적용할 전매제한(lock-up) 기간(초). 0 이면 잠금 없음.
+    /// @dev    Phase 2(전매제한): 토큰이 발행 시점 + 이 기간으로 해제시각을 정한다.
+    function lockupPeriod() external view returns (uint256);
 }
