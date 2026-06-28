@@ -29,7 +29,7 @@
 |------|------|
 | SecurityToken (Sepolia) | [0x5e49c6A2ad526Fa1D25e3e4211C1899c3D23a9cF](https://sepolia.etherscan.io/address/0x5e49c6A2ad526Fa1D25e3e4211C1899c3D23a9cF#code) |
 | InvestorRegistry (Sepolia) | [0x68826F03e758aa4540A1051702273b3C04f55904](https://sepolia.etherscan.io/address/0x68826F03e758aa4540A1051702273b3C04f55904#code) |
-| 프론트엔드 (정적 호스팅) | _배포 후 링크 기입_ |
+| 프론트엔드 (Vercel) | [frontend-mu-eight-48.vercel.app](https://frontend-mu-eight-48.vercel.app) |
 
 로컬에서 바로 실행하려면 [프론트엔드 데모(로컬 · MetaMask)](#프론트엔드-데모-로컬--metamask)를 참고하세요. 컴플라이언스 위반 3종(미등록 수신자·보유상한 초과·lock-up 기간)이 **온체인에서 거부되고 그 사유가 화면에 표시**되는 것이 핵심 장면입니다.
 
