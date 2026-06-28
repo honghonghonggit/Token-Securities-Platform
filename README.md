@@ -41,26 +41,7 @@
 
 ## 아키텍처
 
-```mermaid
-flowchart TD
-    Issuer["발행자 (owner)"]
-    Investor["투자자 (MetaMask)"]
-
-    subgraph Token["SecurityToken — OZ ERC20 + ERC20Burnable 상속"]
-        Update["_update() 훅<br/>모든 잔액 변경이 거치는 단일 검증 지점"]
-    end
-
-    subgraph Registry["InvestorRegistry — 컴플라이언스 두뇌 (IComplianceRegistry 구현)"]
-        R1["① 투자자 적격성<br/>화이트리스트"]
-        R2["② 투자한도<br/>등급별 보유상한"]
-        R3["③ 전매제한<br/>lock-up 기간"]
-    end
-
-    Issuer -->|"mint (발행)"| Update
-    Investor -->|"transfer (전송)"| Update
-    Update -->|"isVerified / canTransfer<br/>(view 호출로 검증 위임)"| Registry
-    Registry -->|"규칙 위반 시 revert<br/>(전송 거부)"| Update
-```
+![아키텍처 다이어그램](docs/architecture.png)
 
 > `SecurityToken`은 규칙을 **집행**(잔액·시각을 알고 있음)하고, `InvestorRegistry`는 규칙을 **보관**(적격성·등급·한도·lock-up)합니다. 토큰은 `IComplianceRegistry` 인터페이스에만 의존하므로, 규칙 확장이 토큰 본체 변경 없이 가능합니다.
 
